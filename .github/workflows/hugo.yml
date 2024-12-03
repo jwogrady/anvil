@@ -1,0 +1,49 @@
+name: Deploy Hugo site to Pages
+
+on:
+  push:
+    branches:
+      - docs
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: docs
+
+      - name: Debug - List root contents
+        run: ls -la
+
+      - name: Debug - List docs contents
+        run: ls -la docs || echo "Docs folder does not exist"
+
+      - name: Set up Hugo
+        run: |
+          wget -O hugo.deb https://github.com/gohugoio/hugo/releases/download/v0.128.0/hugo_extended_0.128.0_linux-amd64.deb
+          sudo dpkg -i hugo.deb
+
+      - name: Build Hugo site
+        run: |
+          cd docs
+          hugo --minify
+
+      - name: Debug - Verify build output
+        run: ls -la docs/public || echo "Public folder does not exist"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/public
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
